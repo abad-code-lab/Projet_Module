@@ -5,7 +5,7 @@ import { getAuthToken } from "./Microservice-User";
 
 // Configuration de base des API
 export const candidatureApi = axios.create({
-  baseURL: SERVER_URL + ":8092/api/startup",
+  baseURL: SERVER_URL + ":8080/api/startup",
   headers: {
     "Content-Type": "application/json",
   },
@@ -87,8 +87,8 @@ export const fetchAllDocumentsCandidatById = (id) => {
   });
 }
 export const downloadDocumentCandidatById = (chemin) => {
-  return candidatureApi.post(`/candidats/document/display`, chemin,{
-     responseType: "blob"  // Important pour traiter les fichiers binaires
+  return candidatureApi.post(`/candidats/document/display`, chemin, {
+    responseType: "blob"  // Important pour traiter les fichiers binaires
   });
 }
 
@@ -114,7 +114,7 @@ export const validerPaiementCandidatureById = (id) => {
 export const validerPaiementCandidature = (id, methodePaiement) => {
   return candidatureApi.patch(`/candidats/validerPaiementCandidat/${id}/methodePaiement/${methodePaiement}`);
 };
-export const uploadPreuvePaiement = (id,proof) => {
+export const uploadPreuvePaiement = (id, proof) => {
   return candidatureApi.patch(`/candidats/uploadPreuvePaiement/${id}`, proof, {
     headers: {
       'Content-Type': 'multipart/form-data', // Pour l'envoi de fichiers

@@ -4,8 +4,8 @@ import { getAuthToken } from "./Microservice-User";
 // Créer une instance Axios avec le jeton dans l'en-tête par défaut
 export const maquetteApi = axios.create({
   //baseURL: "http://31.220.20.148:8083",
-  // baseURL: SERVER_URL + ":8091",
-  baseURL: SERVER_URL + ":8090/MAQUETTE-SERVICE/maquette",
+  // baseURL: SERVER_URL + ":8080",
+  baseURL: SERVER_URL + ":8080/MAQUETTE-SERVICE/maquette",
   // baseURL: "http://localhost:8091",
   headers: {
     "Content-Type": "application/json",
@@ -222,7 +222,7 @@ export const getAllEC = () => {
 
 
 export const getAllECByUE = (id) => {
-  return maquetteApi.get("/ue/" + id +"/ec");
+  return maquetteApi.get("/ue/" + id + "/ec");
 }
 
 export const deleteEC = (id) => {

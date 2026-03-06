@@ -41,7 +41,7 @@ export const deleteToken = () => {
 export const usersApi = axios.create({
   //baseURL: "http://31.220.20.148:8083",
   // baseURL: SERVER_URL + ":8091",
-  baseURL: SERVER_URL + ":8091/api/user/gestionCandidature",
+  baseURL: SERVER_URL + ":8080/api/utilisateurs",
   // baseURL: "http://localhost:8091",
   headers: {
     "Content-Type": "application/json",
@@ -50,14 +50,14 @@ export const usersApi = axios.create({
 
 // Instance pour les requêtes protégées
 export const protectedApi = axios.create({
-  baseURL: SERVER_URL + ":8091/api/user/gestionCandidature",
+  baseURL: SERVER_URL + ":8080/api/utilisateurs",
   withCredentials: true, // Inclure les cookies dans les requêtes
   headers: {
     "Content-Type": "application/json",
   },
 });
 export const protectedApi2 = axios.create({
-  baseURL: SERVER_URL + ":8091/api/user/gestionCandidature",
+  baseURL: SERVER_URL + ":8080/api/utilisateurs",
   withCredentials: true, // Inclure les cookies dans les requêtes
   headers: {
     "Content-Type": "application/json",
@@ -125,7 +125,7 @@ export const protectedApi2 = axios.create({
 //         // alert(refreshAttempts);
 //         await refreshAccessToken().then((response) => {
 //           setAuthHeader(response.data.token);
-        
+
 //         })
 
 //         // Important : <i className="material-icons">edit</i> l'en-tête d'autorisation de la requête originale
@@ -153,65 +153,71 @@ protectedApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Vérifier si c'est une erreur d'authentification
     if (error.response?.status === 401 || error.response?.status === 500) {
-      
+
+      // NE PAS tenter de rafraîchir ou rediriger si l'erreur vient de whoami
+      if (originalRequest.url.includes('auth/whoami') || originalRequest.url.includes('auth/signin')) {
+        return Promise.reject(error);
+      }
+
       // Vérifier le nombre maximum de tentatives
       if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
         console.error('Nombre maximum de tentatives de rafraîchissement atteint.');
-        
+
         // Nettoyer tous les cookies
         document.cookie.split(";").forEach((cookie) => {
           document.cookie = cookie
             .replace(/^\s+/, "")
             .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");
         });
-        
+
         // Rediriger vers la page de connexion
+        refreshAttempts = 0; // Reset before redirect
         localStorage.clear();
         window.location.href = "/";
-        
+
         throw error;
       }
 
       try {
         refreshAttempts++;
         console.log(`Tentative de rafraîchissement ${refreshAttempts}/${MAX_REFRESH_ATTEMPTS}`);
-        
+
         // Tenter de rafraîchir le token
         const response = await refreshAccessToken();
-        
+
         // Vérifier si le rafraîchissement a réussi
         if (response && response.status === 200 && response.data?.token) {
           console.log('Token rafraîchi avec succès');
-          
+
           // Mettre à jour l'en-tête d'autorisation
           setAuthHeader(response.data.token);
-          
+
           // Mettre à jour l'en-tête de la requête originale
           originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
-          
+
           // Réinitialiser le compteur de tentatives après succès
           refreshAttempts = 0;
-          
+
           // Actualiser la page après un délai court pour permettre à la requête de se terminer
           setTimeout(() => {
             console.log('Actualisation de la page après rafraîchissement du token...');
             window.location.reload();
           }, 100);
-          
+
           // Réessayer la requête originale avec le nouveau token
           return protectedApi(originalRequest);
-          
+
         } else {
           // Si la réponse n'est pas 200 ou ne contient pas de token
           throw new Error('Réponse invalide du serveur lors du rafraîchissement');
         }
-        
+
       } catch (refreshError) {
         console.error('Erreur lors de la tentative de rafraîchissement :', refreshError);
-        
+
         // Si on a atteint le maximum de tentatives, nettoyer et rediriger
         if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
           localStorage.clear();
@@ -222,11 +228,11 @@ protectedApi.interceptors.response.use(
           });
           window.location.href = "/";
         }
-        
+
         return Promise.reject(refreshError);
       }
     }
-    
+
     // Pour les autres types d'erreurs, les propager normalement
     return Promise.reject(error);
   }

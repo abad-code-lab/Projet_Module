@@ -57,4 +57,9 @@ public class UtilisateurService {
         String jwt = tokenProvider.generateToken(authentication);
         return new JwtResponseDTO(jwt);
     }
+
+    public Utilisateur findByEmail(String email) {
+        return utilisateurRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
 }
